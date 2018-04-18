@@ -28,14 +28,14 @@ public class controlBodega {
         this.conect = new conexion().getConn();
     }
     
-     public boolean guardar(piezas codigoPiez, proveedores codigoProv, int cant, String fechaComp)
+     public boolean guardar(int codigoPiez, int codigoProv, int cant, String fechaComp)
     {
         boolean resp= false;
         try
         {
             PreparedStatement cmd = this.conect.prepareStatement("INSERT INTO bodega VALUES(NULL,?,?,?,?)");
-            cmd.setInt(1, codigoPiez.getCodipiez());
-            cmd.setInt(2, codigoProv.getCodiprov());
+            cmd.setInt(1, codigoPiez);
+            cmd.setInt(2, codigoProv);
             cmd.setInt(3, cant);
             cmd.setString(4,fechaComp);
             
@@ -100,14 +100,51 @@ public class controlBodega {
         return resp;
     }
      
-     public boolean actualizar(int codigoBode,piezas codigoPiez, proveedores codigoProv, int cant)
+      public bodega cons(int codiBode)
+    {
+        bodega resp = null;
+        try
+        {
+            PreparedStatement cmd = this.conect.prepareStatement("SELECT b.codi_bode, pie.*, pro.*, b.cant, b.fecha_comp FROM bodega b INNER JOIN piezas pie ON b.codi_piez=pie.codi_piez INNER JOIN proveedores pro ON b.codi_prov=pro.codi_prov WHERE codi_bode = ?");
+            cmd.setInt(1, codiBode);
+            ResultSet rs = cmd.executeQuery();
+            if(rs.next())
+            {
+                resp = new bodega(rs.getInt(1), new piezas(rs.getInt(2), rs.getString(3), rs.getString(4), rs.getString(5)), new proveedores(rs.getInt(6), rs.getString(7), rs.getString(8), rs.getString(9)), rs.getInt(10), rs.getString(11));
+            }
+        }
+        catch(SQLException ex)
+        {
+            System.err.println("Error al consultar en Bodega: " + ex.getMessage());
+        }
+        finally
+        {
+            try
+            {
+                if(this.conect != null)
+                {
+                    if(!this.conect.isClosed())
+                    {
+                        this.conect.close();
+                    }
+                }
+            }
+            catch(SQLException ex)
+            {
+                System.err.println("Error al cerrar la conexión");
+            }
+        }
+        return resp;
+    }
+     
+     public boolean actualizar(int codigoBode,int codigoPiez, int codigoProv, int cant)
     {
         boolean resp= false;
         try
         {
             PreparedStatement cmd = this.conect.prepareStatement("UPDATE bodega SET codi_piez = ?, codi_prov = ?, cant=? WHERE codi_bode = ?");
-            cmd.setInt(1, codigoPiez.getCodipiez());
-            cmd.setInt(2, codigoProv.getCodiprov());
+            cmd.setInt(1, codigoPiez);
+            cmd.setInt(2, codigoProv);
             cmd.setInt(3, cant);
             cmd.setInt(4, codigoBode);
             cmd.executeUpdate();
